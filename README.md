@@ -16,11 +16,11 @@ The tool is designed to simplify and improve the job application process by alig
 
 ## Live Demo
 
-https://gautamrajunair.github.io/ai-resume-tailor/
+https://gautamrajunair.github.io/Ai-Resume-Tailor/
 
 ## Repository
 
-https://github.com/gautamrajunair/ai-resume-tailor
+https://github.com/gautamrajunair/Ai-Resume-Tailor
 
 ## Tech Stack
 
