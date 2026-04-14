@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Analyser — Powered by Claude</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0d0b;--bg-card:#191713;
+  --border:rgba(255,255,255,0.07);
+  --tp:#ede8df;--ts:#7d7468;--tm:#4a4540;
+  --acc:#c8882f;--acc-l:#d9a057;
+  --acc-d:rgba(200,136,47,0.1);--acc-b:rgba(200,136,47,0.22);
+  --green:#5a9e72;--r:10px;
+}
+body{background:var(--bg);color:var(--tp);font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;min-height:100vh;}
+header{display:flex;align-items:center;justify-content:space-between;padding:1.4rem 2.5rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(14,13,11,0.93);backdrop-filter:blur(12px);z-index:100;}
+.hl{display:flex;align-items:baseline;gap:1rem}
+.logo{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;letter-spacing:-0.02em;color:var(--tp);}
+.logo b{color:var(--acc);font-weight:700}
+.tag{font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--tm);}
+.kb{display:flex;align-items:center;gap:0.6rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0.35rem 0.7rem 0.35rem 0.9rem;min-width:330px;}
+.kb label{font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--tm);white-space:nowrap;}
+.kb input{flex:1;background:transparent;border:none;outline:none;color:var(--tp);font-size:0.82rem;font-family:monospace;}
+.kb input::placeholder{color:var(--tm);opacity:0.7}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--tm);flex-shrink:0;transition:background 0.3s;}
+.dot.on{background:var(--green)}
+main{max-width:1240px;margin:0 auto;padding:2rem 2.5rem 4rem;}
+.fl{font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ts);margin-bottom:0.45rem;display:block;}
+.cr{margin-bottom:1.4rem}
+.ti{width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.95rem;color:var(--tp);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;}
+.ti:focus{border-color:var(--acc)}
+.ti::placeholder{color:var(--tm)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem;}
+.ic{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;transition:border-color 0.2s;}
+.ic:focus-within{border-color:var(--acc-b)}
+.ich{display:flex;align-items:center;justify-content:space-between;padding:0.8rem 1.15rem;border-bottom:1px solid var(--border);}
+.ict{font-family:'Playfair Display',serif;font-size:0.98rem;font-weight:600;display:flex;align-items:center;gap:0.55rem;}
+.icn{width:18px;height:18px;background:var(--acc-d);border:1px solid var(--acc-b);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--acc);font-style:normal;font-family:'DM Sans',sans-serif;font-weight:700;letter-spacing:-0.05em;}
+.bdg{font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--acc);border:1px solid var(--acc-b);padding:2px 7px;border-radius:20px;background:var(--acc-d);}
+.cc{font-size:0.7rem;color:var(--tm);}
+textarea{flex:1;width:100%;background:transparent;border:none;outline:none;resize:none;color:var(--tp);font-family:'DM Sans',sans-serif;font-size:0.875rem;line-height:1.65;padding:0.95rem 1.15rem;min-height:300px;}
+textarea::placeholder{color:var(--tm);opacity:0.65}
+.ar{display:flex;align-items:center;gap:0.9rem;margin-bottom:1.8rem;flex-wrap:wrap;}
+#analyseBtn{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:0.65rem 1.85rem;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;letter-spacing:0.01em;transition:background 0.18s,transform 0.1s,box-shadow 0.2s;display:flex;align-items:center;gap:0.45rem;}
+#analyseBtn:hover{background:var(--acc-l);box-shadow:0 0 18px rgba(200,136,47,0.25)}
+#analyseBtn:active{transform:scale(0.98)}
+#analyseBtn:disabled{opacity:0.42;cursor:not-allowed;transform:none;box-shadow:none}
+#downloadBtn{background:transparent;color:var(--tp);border:1px solid var(--border);border-radius:8px;padding:0.65rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:0.875rem;cursor:pointer;transition:border-color 0.2s,background 0.2s;display:none;align-items:center;gap:0.45rem;}
+#downloadBtn:hover{border-color:var(--ts);background:rgba(255,255,255,0.03)}
+#downloadBtn.show{display:flex}
+#downloadBtn:disabled{opacity:0.42;cursor:not-allowed}
+#coverBtn{background:transparent;color:var(--tp);border:1px solid rgba(90,158,114,0.4);border-radius:8px;padding:0.65rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:0.875rem;cursor:pointer;transition:border-color 0.2s,background 0.2s,color 0.2s;display:flex;align-items:center;gap:0.45rem;}
+#coverBtn:hover{border-color:var(--green);background:rgba(90,158,114,0.08);color:#8ecba5}
+#coverBtn:disabled{opacity:0.42;cursor:not-allowed}
+#dlCoverBtn{background:transparent;color:var(--tp);border:1px solid var(--border);border-radius:8px;padding:0.65rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:0.875rem;cursor:pointer;transition:border-color 0.2s,background 0.2s;display:none;align-items:center;gap:0.45rem;}
+#dlCoverBtn:hover{border-color:var(--ts);background:rgba(255,255,255,0.03)}
+#dlCoverBtn.show{display:flex}
+#dlCoverBtn:disabled{opacity:0.42;cursor:not-allowed}
+#statusMsg{font-size:0.82rem;color:var(--ts);display:none;align-items:center;gap:0.45rem;}
+#statusMsg.show{display:flex}
+#statusMsg.err{color:#c66}
+#clStatusMsg{font-size:0.82rem;color:var(--ts);display:none;align-items:center;gap:0.45rem;}
+#clStatusMsg.show{display:flex}
+#clStatusMsg.err{color:#c66}
+.cl-letter{font-family:'DM Sans',sans-serif;font-size:0.9rem;line-height:1.8;color:var(--tp);white-space:pre-wrap;}
+.pb-wrap{height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:1.4rem;display:none;}
+.pb-wrap.show{display:block}
+.pb{height:100%;width:0%;background:var(--acc);border-radius:2px;transition:width 0.25s;animation:sh 1.5s ease-in-out infinite;}
+@keyframes sh{0%{opacity:1}50%{opacity:0.55}100%{opacity:1}}
+.rw{display:none;flex-direction:column;gap:1.4rem;}
+.rw.show{display:flex}
+.rc{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.rch{padding:0.9rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.rch h2{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;}
+.rch .meta{font-size:0.75rem;color:var(--tm);}
+.rb{padding:1.4rem;}
+.md h1{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;margin:0.5rem 0 0.7rem}
+.md h2{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;margin:1.6rem 0 0.55rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border)}
+.md h2:first-child{margin-top:0}
+.md h3{font-size:0.93rem;font-weight:600;margin:1.1rem 0 0.35rem;color:var(--acc-l)}
+.md p{margin:0.45rem 0}
+.md ul,.md ol{padding-left:1.3rem;margin:0.45rem 0}
+.md li{margin:0.28rem 0}
+.md strong{font-weight:600}
+.md code{background:rgba(255,255,255,0.06);padding:0.1em 0.3em;border-radius:4px;font-family:monospace;font-size:0.84em;color:var(--acc-l)}
+.md blockquote{border-left:3px solid var(--acc-b);padding:0.35rem 0.9rem;margin:0.65rem 0;background:var(--acc-d);border-radius:0 6px 6px 0}
+.md blockquote p{color:var(--ts);margin:0}
+.md hr{border:none;border-top:1px solid var(--border);margin:1.4rem 0}
+.md table{width:100%;border-collapse:collapse;margin:0.9rem 0;font-size:0.845rem}
+.md th{background:var(--acc-d);color:var(--acc-l);text-align:left;padding:0.45rem 0.8rem;font-size:0.7rem;letter-spacing:0.07em;text-transform:uppercase;border:1px solid var(--border);font-weight:600}
+.md td{padding:0.45rem 0.8rem;border:1px solid var(--border);vertical-align:top}
+.md tr:nth-child(even) td{background:rgba(255,255,255,0.016)}
+.sp{display:flex;gap:0.65rem;flex-wrap:wrap;margin-bottom:1.4rem;}
+.pill{display:flex;align-items:baseline;gap:0.35rem;background:var(--acc-d);border:1px solid var(--acc-b);border-radius:6px;padding:0.35rem 0.8rem;}
+.pill .pl{font-size:0.7rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--ts);}
+.pill .pv{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--acc-l);}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(200,136,47,0.22);border-top-color:var(--acc);border-radius:50%;animation:rot 0.7s linear infinite;}
+@keyframes rot{to{transform:rotate(360deg)}}
+.cur{display:inline-block;width:2px;height:1em;background:var(--acc);animation:bl 0.9s step-end infinite;vertical-align:text-bottom;margin-left:1px;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+.ai-section{margin-bottom:1.6rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color 0.2s;}
+.ai-section:focus-within{border-color:var(--acc-b)}
+.ai-head{display:flex;align-items:center;justify-content:space-between;padding:0.8rem 1.15rem;border-bottom:1px solid var(--border);}
+.ai-title{font-family:'Playfair Display',serif;font-size:0.98rem;font-weight:600;display:flex;align-items:center;gap:0.55rem;}
+.ai-icn{width:18px;height:18px;background:rgba(125,116,104,0.12);border:1px solid rgba(125,116,104,0.25);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--ts);font-style:normal;font-family:'DM Sans',sans-serif;font-weight:700;}
+.ai-opt{font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--tm);border:1px solid rgba(125,116,104,0.2);padding:2px 7px;border-radius:20px;}
+#aiCount{font-size:0.7rem;color:var(--tm);}
+#additionalInfo{width:100%;background:transparent;border:none;outline:none;resize:none;color:var(--tp);font-family:'DM Sans',sans-serif;font-size:0.875rem;line-height:1.65;padding:0.95rem 1.15rem;min-height:110px;}
+#additionalInfo::placeholder{color:var(--tm);opacity:0.65}
+.fn{margin-top:2.2rem;padding-top:1.4rem;border-top:1px solid var(--border);font-size:0.76rem;color:var(--tm);text-align:center;line-height:1.7;}
+@media(max-width:880px){
+  .grid{grid-template-columns:1fr}
+  header{flex-direction:column;align-items:flex-start;gap:0.9rem}
+  .kb{min-width:0;width:100%}
+  main{padding:1.4rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hl">
+    <div class="logo">Resume<b>.</b>AI</div>
+    <span class="tag">Powered by Claude Sonnet</span>
+  </div>
+  <div class="kb">
+    <label for="apiKey">API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+    <div class="dot" id="keyDot"></div>
+  </div>
+</header>
+
+<main>
+  <div class="cr">
+    <label class="fl" for="companyName">Company &amp; Role Context <span style="opacity:0.45">(optional but recommended)</span></label>
+    <input type="text" class="ti" id="companyName" placeholder="e.g. Acme Corp — Series B SaaS; role reports to CTO, focused on cloud infrastructure">
+  </div>
+
+  <div class="grid">
+    <div class="ic">
+      <div class="ich">
+        <div class="ict"><i class="icn">JD</i> Job Description</div>
+        <div style="display:flex;align-items:center;gap:0.55rem">
+          <span class="bdg">Required</span>
+          <span class="cc" id="jdCount">0 chars</span>
+        </div>
+      </div>
+      <textarea id="jobDescription" placeholder="Paste the full job description here — responsibilities, requirements, preferred qualifications..."></textarea>
+    </div>
+
+    <div class="ic">
+      <div class="ich">
+        <div class="ict"><i class="icn">CV</i> Current Resume</div>
+        <div style="display:flex;align-items:center;gap:0.55rem">
+          <span class="bdg">Required</span>
+          <span class="cc" id="cvCount">0 chars</span>
+        </div>
+      </div>
+      <textarea id="currentResume" placeholder="Paste your full resume here — work experience, skills, education, achievements..."></textarea>
+    </div>
+  </div>
+
+  <div class="ai-section">
+    <div class="ai-head">
+      <div class="ai-title">
+        <i class="ai-icn">+</i>
+        Additional Information
+      </div>
+      <div style="display:flex;align-items:center;gap:0.55rem">
+        <span class="ai-opt">Optional</span>
+        <span id="aiCount">0 chars</span>
+      </div>
+    </div>
+    <textarea id="additionalInfo" placeholder="Add any extra details to strengthen tailoring — e.g. personal projects, certifications (completed or in progress), courses (AI, data, cloud), tools or technologies not in your resume, achievements, or any other relevant experience..."></textarea>
+  </div>
+
+  <div class="ar">
+    <button id="analyseBtn">Analyse &amp; Tailor Resume</button>
+    <button id="downloadBtn">&#8595; Download Tailored Resume (.docx)</button>
+    <div id="statusMsg">
+      <span id="spinner" class="spin" style="display:none"></span>
+      <span id="statusText"></span>
+    </div>
+  </div>
+
+  <div class="pb-wrap" id="progressWrap"><div class="pb" id="progressBar"></div></div>
+
+  <div class="ar" style="margin-top:-0.6rem">
+    <button id="coverBtn">&#9998; Generate Cover Letter</button>
+    <button id="dlCoverBtn">&#8595; Download Cover Letter (.docx)</button>
+    <div id="clStatusMsg">
+      <span id="clSpinner" class="spin" style="display:none"></span>
+      <span id="clStatusText"></span>
+    </div>
+  </div>
+
+  <div class="pb-wrap" id="clProgressWrap"><div class="pb" id="clProgressBar"></div></div>
+
+  <div class="rw" id="resultsWrap">
+    <div class="rc">
+      <div class="rch">
+        <h2>Analysis Report</h2>
+        <span class="meta" id="resultsMeta"></span>
+      </div>
+      <div class="rb">
+        <div class="sp" id="scorePills" style="display:none"></div>
+        <div class="md" id="analysisOutput"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rw" id="coverWrap">
+    <div class="rc">
+      <div class="rch">
+        <h2>Cover Letter</h2>
+        <span class="meta" id="coverMeta"></span>
+      </div>
+      <div class="rb">
+        <div class="cl-letter" id="coverOutput"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fn">
+    Your API key is used directly in-browser and is never stored or sent anywhere except Anthropic's servers.
+    &nbsp;|&nbsp; Model: <strong>claude-sonnet-4-20250514</strong>
+    &nbsp;|&nbsp; Downloads a proper Word .docx — ATS-compatible, no tables or graphics
+  </div>
+</main>
+
+<script>
+// ─── LIBRARIES loaded dynamically to ensure they exist before use ───────────
+(function loadLibs() {
+  function addScript(src, onload) {
+    var s = document.createElement('script');
+    s.src = src; s.onload = onload;
+    s.onerror = function() { console.error('Failed to load: ' + src); };
+    document.head.appendChild(s);
+  }
+  // Load marked first, then docx
+  addScript('https://cdn.jsdelivr.net/npm/marked@9/marked.min.js', function() {
+    addScript('https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js', function() {
+      initApp();
+    });
+  });
+})();
+
+function initApp() {
+  // ─── CONSTANTS ─────────────────────────────────────────────────────────────
+  var MODEL = 'claude-sonnet-4-20250514';
+
+  var SYSTEM_PROMPT = 'You are an experienced recruiter, hiring manager, and ATS evaluator with a background in hiring for technology companies. Your job is to analyse a candidate\'s resume against a specific job description and give honest, practical, actionable feedback.\n\n'
+    + 'Your analysis must cover these sections:\n\n'
+    + '## 1. Overall Match Score\n'
+    + 'State "**Overall Match: XX%**" on its own line. Explain why. State whether this resume would pass initial recruiter screening.\n\n'
+    + '## 2. ATS Compatibility & Keyword Analysis\n'
+    + 'State "**ATS Score: XX%**" on its own line. Produce a table with columns: Job Requirement | Present in Resume | Strength (Strong/Partial/Missing). List all key JD requirements. Call out critical missing keywords and tools/technologies.\n\n'
+    + '## 3. Skills & Experience Match\n'
+    + '(a) Strong Matches, (b) Partial Matches, (c) Missing Requirements.\n\n'
+    + '## 4. Recruiter Perspective\n'
+    + 'Would this resume get shortlisted? Strongest parts? Weakest parts?\n\n'
+    + '## 5. Resume Improvement Suggestions\n'
+    + 'Specific keywords to add, bullets to rewrite, sections to emphasise.\n\n'
+    + '## 6. Bullet Point Optimisation\n'
+    + 'Pick 3-5 weak bullets. Show original and rewrite side-by-side with strong action verbs and metrics.\n\n'
+    + '## 7. Tailoring Strategy\n'
+    + 'What to highlight, reduce, and add for this specific role and company.\n\n'
+    + '---\n\n'
+    + 'AFTER your full analysis, output the complete tailored resume using EXACTLY this tagged format. This is machine-parsed to generate a Word document so follow it precisely:\n\n'
+    + '[RESUME_START]\n'
+    + '[NAME]Full Name[/NAME]\n'
+    + '[CONTACT]Email: placeholder@email.com  |  Phone: +44 7xxx xxx xxx  |  Location: City, Country  |  LinkedIn: linkedin.com/in/handle[/CONTACT]\n'
+    + '[SECTION:PROFESSIONAL SUMMARY]\n'
+    + 'Three to four sentences as a single paragraph. Tailored to this role. No bullets or line breaks.\n'
+    + '[/SECTION]\n'
+    + '[SECTION:KEY SKILLS]\n'
+    + 'Skill One, Skill Two, Skill Three, Skill Four, Skill Five, Skill Six, Skill Seven, Skill Eight, Skill Nine, Skill Ten\n'
+    + '[/SECTION]\n'
+    + '[SECTION:PROFESSIONAL EXPERIENCE]\n'
+    + '[JOB]\n'
+    + 'Job Title  |  Company Name  |  Month Year - Month Year  |  City, Country\n'
+    + '- Action verb + specific achievement + quantified impact\n'
+    + '- Action verb + specific achievement + quantified impact\n'
+    + '- Action verb + specific achievement + quantified impact\n'
+    + '[/JOB]\n'
+    + '[JOB]\n'
+    + 'Job Title  |  Company Name  |  Month Year - Month Year  |  City, Country\n'
+    + '- Action verb + achievement\n'
+    + '- Action verb + achievement\n'
+    + '[/JOB]\n'
+    + '[/SECTION]\n'
+    + '[SECTION:EDUCATION]\n'
+    + '[DEGREE]Degree Title  |  Institution Name  |  Year[/DEGREE]\n'
+    + '[/SECTION]\n'
+    + '[SECTION:CERTIFICATIONS]\n'
+    + '[CERT]Certification Name  |  Issuing Body  |  Year[/CERT]\n'
+    + '[/SECTION]\n'
+    + '[RESUME_END]\n\n'
+    + 'STRICT RULES for the tagged resume:\n'
+    + '1. Only use information from the original resume (enhanced for this role) - never invent jobs, companies, dates, or qualifications\n'
+    + '2. For missing contact details use bracketed placeholders: [your@email.com] or [Your Phone]\n'
+    + '3. Every experience bullet MUST begin with a strong past-tense action verb (Led, Built, Delivered, Reduced, etc.)\n'
+    + '4. KEY SKILLS: comma-separated on one or two lines, no bullets or dashes\n'
+    + '5. Each [JOB] first line: Title | Company | Dates | Location (pipe-separated, exactly four fields)\n'
+    + '6. Each bullet: "- " prefix then text (no sub-bullets, no nested lists)\n'
+    + '7. PROFESSIONAL SUMMARY: one paragraph, no line breaks or bullets inside\n'
+    + '8. Omit [SECTION:CERTIFICATIONS] entirely if no certifications exist in the original resume\n'
+    + '9. No markdown, tables, HTML, or extra formatting inside the tags';
+
+  // ─── STATE ─────────────────────────────────────────────────────────────────
+  var rawMarkdown = '';
+  var rawCoverLetter = '';
+
+  // ─── DOM REFS ──────────────────────────────────────────────────────────────
+  var apiKeyEl       = document.getElementById('apiKey');
+  var companyEl      = document.getElementById('companyName');
+  var jdEl           = document.getElementById('jobDescription');
+  var cvEl           = document.getElementById('currentResume');
+  var analyseBtnEl   = document.getElementById('analyseBtn');
+  var downloadBtnEl  = document.getElementById('downloadBtn');
+  var coverBtnEl     = document.getElementById('coverBtn');
+  var dlCoverBtnEl   = document.getElementById('dlCoverBtn');
+  var additionalEl   = document.getElementById('additionalInfo');
+  var aiCountEl      = document.getElementById('aiCount');
+  var statusEl       = document.getElementById('statusMsg');
+  var spinnerEl      = document.getElementById('spinner');
+  var statusTextEl   = document.getElementById('statusText');
+  var clStatusEl     = document.getElementById('clStatusMsg');
+  var clSpinnerEl    = document.getElementById('clSpinner');
+  var clStatusTextEl = document.getElementById('clStatusText');
+  var progressWrapEl = document.getElementById('progressWrap');
+  var progressBarEl  = document.getElementById('progressBar');
+  var clProgWrapEl   = document.getElementById('clProgressWrap');
+  var clProgBarEl    = document.getElementById('clProgressBar');
+  var resultsWrapEl  = document.getElementById('resultsWrap');
+  var coverWrapEl    = document.getElementById('coverWrap');
+  var outputEl       = document.getElementById('analysisOutput');
+  var coverOutputEl  = document.getElementById('coverOutput');
+  var pillsEl        = document.getElementById('scorePills');
+  var metaEl         = document.getElementById('resultsMeta');
+  var coverMetaEl    = document.getElementById('coverMeta');
+  var jdCountEl      = document.getElementById('jdCount');
+  var cvCountEl      = document.getElementById('cvCount');
+  var keyDotEl       = document.getElementById('keyDot');
+
+  // ─── HELPERS ───────────────────────────────────────────────────────────────
+  function setStatus(msg, isErr, showSpin) {
+    spinnerEl.style.display = showSpin ? 'inline-block' : 'none';
+    statusTextEl.textContent = msg;
+    statusEl.classList.toggle('err', !!isErr);
+    if (msg) statusEl.classList.add('show'); else statusEl.classList.remove('show');
+  }
+
+  function setClStatus(msg, isErr, showSpin) {
+    clSpinnerEl.style.display = showSpin ? 'inline-block' : 'none';
+    clStatusTextEl.textContent = msg;
+    clStatusEl.classList.toggle('err', !!isErr);
+    if (msg) clStatusEl.classList.add('show'); else clStatusEl.classList.remove('show');
+  }
+
+  function setProgress(p) { progressBarEl.style.width = p + '%'; }
+  function setClProgress(p) { clProgBarEl.style.width = p + '%'; }
+
+  function extractScores(md) {
+    var om = md.match(/Overall\s+Match[^:]*:\s*(\d+)%/i);
+    var am = md.match(/ATS\s+Score[^:]*:\s*(\d+)%/i);
+    return {
+      overall: om ? parseInt(om[1], 10) : null,
+      ats: am ? parseInt(am[1], 10) : null
+    };
+  }
+
+  function showPills(s) {
+    var parts = [];
+    if (s.overall !== null) parts.push('<div class="pill"><span class="pl">Match</span><span class="pv">' + s.overall + '%</span></div>');
+    if (s.ats !== null)     parts.push('<div class="pill"><span class="pl">ATS Score</span><span class="pv">' + s.ats + '%</span></div>');
+    if (parts.length) { pillsEl.innerHTML = parts.join(''); pillsEl.style.display = 'flex'; }
+  }
+
+  // ─── EVENT LISTENERS ───────────────────────────────────────────────────────
+  apiKeyEl.addEventListener('input', function() {
+    keyDotEl.classList.toggle('on', this.value.indexOf('sk-ant') === 0);
+  });
+
+  jdEl.addEventListener('input', function() {
+    jdCountEl.textContent = this.value.length ? this.value.length.toLocaleString() + ' chars' : '0 chars';
+  });
+
+  cvEl.addEventListener('input', function() {
+    cvCountEl.textContent = this.value.length ? this.value.length.toLocaleString() + ' chars' : '0 chars';
+  });
+
+  additionalEl.addEventListener('input', function() {
+    aiCountEl.textContent = this.value.length ? this.value.length.toLocaleString() + ' chars' : '0 chars';
+  });
+
+  analyseBtnEl.addEventListener('click', function() { analyseResume(); });
+  downloadBtnEl.addEventListener('click', function() { downloadWordDoc(); });
+  coverBtnEl.addEventListener('click', function() { generateCoverLetter(); });
+  dlCoverBtnEl.addEventListener('click', function() { downloadCoverDoc(); });
+
+  // ─── ANALYSE ───────────────────────────────────────────────────────────────
+  async function analyseResume() {
+    var apiKey  = apiKeyEl.value.trim();
+    var company = companyEl.value.trim();
+    var jd      = jdEl.value.trim();
+    var resume  = cvEl.value.trim();
+
+    if (!apiKey)  { setStatus('Please enter your Anthropic API key.', true, false); return; }
+    if (!jd)      { setStatus('Please paste the job description.', true, false); return; }
+    if (!resume)  { setStatus('Please paste your resume.', true, false); return; }
+
+    analyseBtnEl.disabled = true;
+    analyseBtnEl.innerHTML = '<span class="spin" style="display:inline-block"></span> Analysing\u2026';
+    downloadBtnEl.classList.remove('show');
+    pillsEl.style.display = 'none';
+    pillsEl.innerHTML = '';
+    rawMarkdown = '';
+
+    setStatus('Connecting to Claude API\u2026', false, true);
+    progressWrapEl.classList.add('show');
+    setProgress(5);
+
+    var additional = additionalEl.value.trim();
+
+    var startTime = Date.now();
+
+    var userMsg = '';
+    if (company) userMsg += '**Company Information:** ' + company + '\n\n';
+    userMsg += '**Job Description:**\n' + jd + '\n\n';
+    userMsg += '**My Resume:**\n' + resume;
+    if (additional) userMsg += '\n\n**Additional Information:** ' + additional + '\n(Use the above only where relevant and where it genuinely strengthens the tailoring. Prioritise alignment with the job description. Do not force irrelevant content into the resume or analysis.)';
+
+    try {
+      var response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: 8000,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: userMsg }],
+          stream: true
+        })
+      });
+
+      if (!response.ok) {
+        var errData = await response.json().catch(function() { return {}; });
+        throw new Error((errData.error && errData.error.message) || ('API error ' + response.status));
+      }
+
+      setStatus('Streaming analysis\u2026', false, true);
+      setProgress(15);
+      resultsWrapEl.classList.add('show');
+      outputEl.innerHTML = '<span class="cur"></span>';
+      metaEl.textContent = '';
+
+      var reader = response.body.getReader();
+      var decoder = new TextDecoder();
+      var buf = '';
+      var chars = 0;
+      var pillsDone = false;
+
+      while (true) {
+        var readResult = await reader.read();
+        if (readResult.done) break;
+        buf += decoder.decode(readResult.value, { stream: true });
+        var lines = buf.split('\n');
+        buf = lines.pop() || '';
+
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line.indexOf('data: ') !== 0) continue;
+          var d = line.slice(6).trim();
+          if (d === '[DONE]') continue;
+          try {
+            var parsed = JSON.parse(d);
+            if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
+              rawMarkdown += parsed.delta.text;
+              chars += parsed.delta.text.length;
+              var display = rawMarkdown.split('[RESUME_START]')[0];
+              outputEl.innerHTML = window.marked.parse(display) + '<span class="cur"></span>';
+              if (!pillsDone && rawMarkdown.indexOf('ATS Score') !== -1) {
+                var sc = extractScores(rawMarkdown);
+                if (sc.overall !== null || sc.ats !== null) { showPills(sc); pillsDone = true; }
+              }
+              setProgress(Math.min(90, 15 + chars / 90));
+            }
+          } catch (e) { /* ignore parse errors on individual chunks */ }
+        }
+      }
+
+      // Final render
+      var finalDisplay = rawMarkdown.split('[RESUME_START]')[0];
+      outputEl.innerHTML = window.marked.parse(finalDisplay);
+      if (!pillsDone) showPills(extractScores(rawMarkdown));
+
+      var hasResume = rawMarkdown.indexOf('[RESUME_START]') !== -1 && rawMarkdown.indexOf('[RESUME_END]') !== -1;
+      setProgress(100);
+      var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      setStatus(hasResume ? 'Analysis complete \u2014 tailored resume ready to download.' : 'Analysis complete.', false, false);
+      metaEl.textContent = elapsed + 's \u00b7 ' + chars.toLocaleString() + ' chars';
+      downloadBtnEl.classList.add('show');
+      setTimeout(function() { progressWrapEl.classList.remove('show'); setProgress(0); }, 900);
+
+    } catch (err) {
+      setStatus('Error: ' + err.message, true, false);
+      progressWrapEl.classList.remove('show');
+      setProgress(0);
+      if (!rawMarkdown) resultsWrapEl.classList.remove('show');
+    } finally {
+      analyseBtnEl.disabled = false;
+      analyseBtnEl.innerHTML = 'Analyse &amp; Tailor Resume';
+    }
+  }
+
+  // ─── RESUME PARSER ─────────────────────────────────────────────────────────
+  function parseResume(md) {
+    var blockMatch = md.match(/\[RESUME_START\]([\s\S]*?)\[RESUME_END\]/i);
+    if (!blockMatch) return null;
+    var block = blockMatch[1];
+
+    var nameMatch    = block.match(/\[NAME\]([\s\S]*?)\[\/NAME\]/i);
+    var contactMatch = block.match(/\[CONTACT\]([\s\S]*?)\[\/CONTACT\]/i);
+    var name    = nameMatch    ? nameMatch[1].trim()    : 'Your Name';
+    var contact = contactMatch ? contactMatch[1].trim() : '';
+
+    var sections = [];
+    var secRx = /\[SECTION:([^\]]+)\]([\s\S]*?)\[\/SECTION\]/gi;
+    var sm;
+    while ((sm = secRx.exec(block)) !== null) {
+      var title   = sm[1].trim().toUpperCase();
+      var content = sm[2].trim();
+
+      if (/SUMMARY|PROFILE|OBJECTIVE|ABOUT/.test(title)) {
+        var summary = content.replace(/\n+/g, ' ').replace(/^[-\u2022]\s*/, '').trim();
+        sections.push({ title: title, type: 'summary', content: summary });
+
+      } else if (/SKILL/.test(title)) {
+        var skills = [];
+        var slines = content.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+        if (slines.length && slines.every(function(l) { return /^[-\u2022]/.test(l); })) {
+          skills = slines.map(function(l) { return l.replace(/^[-\u2022]\s*/, '').trim(); }).filter(Boolean);
+        } else {
+          skills = content.replace(/\n/g, ',').split(',').map(function(s) { return s.replace(/^[-\u2022]\s*/, '').trim(); }).filter(Boolean);
+        }
+        sections.push({ title: title, type: 'skills', skills: skills });
+
+      } else if (/EXPERIENCE|EMPLOYMENT|CAREER|WORK HISTORY/.test(title)) {
+        var jobs = [];
+        var jobRx = /\[JOB\]([\s\S]*?)\[\/JOB\]/gi; var jm;
+        while ((jm = jobRx.exec(content)) !== null) {
+          var jlines = jm[1].trim().split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+          var header = jlines[0] || '';
+          var parts  = header.split(/\s*\|\s*/);
+          var bullets = jlines.slice(1)
+            .filter(function(l) { return /^[-\u2022]/.test(l); })
+            .map(function(l) { return l.replace(/^[-\u2022]\s*/, '').trim(); })
+            .filter(Boolean);
+          jobs.push({
+            title:    (parts[0] || '').trim(),
+            company:  (parts[1] || '').trim(),
+            dates:    (parts[2] || '').trim(),
+            location: (parts[3] || '').trim(),
+            bullets:  bullets
+          });
+        }
+        sections.push({ title: title, type: 'experience', jobs: jobs });
+
+      } else if (/EDUCATION/.test(title)) {
+        var degrees = [];
+        var degRx = /\[DEGREE\]([\s\S]*?)\[\/DEGREE\]/gi; var dm;
+        while ((dm = degRx.exec(content)) !== null) {
+          var dp = dm[1].trim().split(/\s*\|\s*/);
+          degrees.push({ qual: (dp[0] || '').trim(), institution: (dp[1] || '').trim(), year: (dp[2] || '').trim() });
+        }
+        if (!degrees.length) {
+          content.split('\n').forEach(function(l) {
+            var c = l.trim(); if (!c) return;
+            var dp = c.split(/\s*\|\s*/);
+            if (dp[0] && dp[0].trim()) degrees.push({ qual: dp[0].trim(), institution: (dp[1] || '').trim(), year: (dp[2] || '').trim() });
+          });
+        }
+        sections.push({ title: title, type: 'education', degrees: degrees });
+
+      } else if (/CERTIF|LICEN|AWARD|ACHIEVE/.test(title)) {
+        var certs = [];
+        var certRx = /\[CERT\]([\s\S]*?)\[\/CERT\]/gi; var cm;
+        while ((cm = certRx.exec(content)) !== null) certs.push(cm[1].trim());
+        if (!certs.length) {
+          content.split('\n').forEach(function(l) {
+            var c = l.replace(/^[-\u2022]\s*/, '').trim(); if (c) certs.push(c);
+          });
+        }
+        sections.push({ title: title, type: 'certifications', certs: certs });
+
+      } else {
+        var glines = content.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+        sections.push({ title: title, type: 'generic', lines: glines });
+      }
+    }
+    return { name: name, contact: contact, sections: sections };
+  }
+
+  // ─── DOCX DOWNLOAD ─────────────────────────────────────────────────────────
+  async function downloadWordDoc() {
+    if (!rawMarkdown) { setStatus('No analysis to download yet.', true, false); return; }
+
+    if (!window.docx) { setStatus('Document library not loaded. Please refresh and try again.', true, false); return; }
+
+    downloadBtnEl.disabled = true;
+    downloadBtnEl.textContent = 'Building document\u2026';
+
+    try {
+      var parsed = parseResume(rawMarkdown);
+      if (!parsed || !parsed.sections.length) {
+        throw new Error('Structured resume block not found. The analysis may not have completed — please try analysing again.');
+      }
+
+      var docx        = window.docx;
+      var Document    = docx.Document;
+      var Packer      = docx.Packer;
+      var Paragraph   = docx.Paragraph;
+      var TextRun     = docx.TextRun;
+      var AlignmentType = docx.AlignmentType;
+      var BorderStyle = docx.BorderStyle;
+      var LevelFormat = docx.LevelFormat;
+
+      // Page: A4, 0.75" margins
+      var MARGIN  = 1080;
+      var PAGE_W  = 11906;
+      var FONT    = 'Calibri';
+
+      // Font sizes (half-points: 1pt = 2 units)
+      var SZ_NAME    = 40;  // 20pt
+      var SZ_CONTACT = 18;  // 9pt
+      var SZ_HEAD    = 22;  // 11pt
+      var SZ_BODY    = 21;  // 10.5pt
+      var SZ_JOBT    = 22;  // 11pt bold
+
+      var C_BLACK   = '111111';
+      var C_DARK    = '1A1A1A';
+      var C_CONTACT = '444444';
+      var C_MUTED   = '555555';
+
+      function mkBullet(text) {
+        return new Paragraph({
+          numbering: { reference: 'rb', level: 0 },
+          spacing: { before: 20, after: 30 },
+          children: [new TextRun({ text: text, size: SZ_BODY, font: FONT, color: C_DARK })]
+        });
+      }
+
+      function mkHead(text) {
+        return new Paragraph({
+          spacing: { before: 280, after: 100 },
+          border: { bottom: { color: '999999', space: 1, style: BorderStyle.SINGLE, size: 6 } },
+          children: [new TextRun({ text: text, bold: true, size: SZ_HEAD, font: FONT, color: C_BLACK, allCaps: true })]
+        });
+      }
+
+      var children = [];
+
+      // Name
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 0, after: 80 },
+        children: [new TextRun({ text: parsed.name, bold: true, size: SZ_NAME, font: FONT, color: C_BLACK })]
+      }));
+
+      // Contact
+      if (parsed.contact) {
+        children.push(new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 0, after: 300 },
+          children: [new TextRun({ text: parsed.contact, size: SZ_CONTACT, font: FONT, color: C_CONTACT })]
+        }));
+      }
+
+      // Sections
+      for (var si = 0; si < parsed.sections.length; si++) {
+        var sec = parsed.sections[si];
+        children.push(mkHead(sec.title));
+
+        if (sec.type === 'summary') {
+          children.push(new Paragraph({
+            spacing: { before: 60, after: 60 },
+            children: [new TextRun({ text: sec.content, size: SZ_BODY, font: FONT, color: C_DARK })]
+          }));
+
+        } else if (sec.type === 'skills') {
+          var skillLine = sec.skills.join('   \u2022   ');
+          children.push(new Paragraph({
+            spacing: { before: 60, after: 60 },
+            children: [new TextRun({ text: skillLine, size: SZ_BODY, font: FONT, color: C_DARK })]
+          }));
+
+        } else if (sec.type === 'experience') {
+          for (var ji = 0; ji < sec.jobs.length; ji++) {
+            var job = sec.jobs[ji];
+            var runs = [];
+            if (job.title)    runs.push(new TextRun({ text: job.title,                       bold: true, size: SZ_JOBT, font: FONT, color: C_BLACK }));
+            if (job.company)  runs.push(new TextRun({ text: '   |   ' + job.company,                     size: SZ_BODY, font: FONT, color: C_DARK }));
+            if (job.dates)    runs.push(new TextRun({ text: '   |   ' + job.dates,  italics: true,        size: SZ_BODY, font: FONT, color: C_MUTED }));
+            if (job.location) runs.push(new TextRun({ text: '   |   ' + job.location,                    size: SZ_BODY, font: FONT, color: C_MUTED }));
+            children.push(new Paragraph({ spacing: { before: 180, after: 60 }, children: runs }));
+            for (var bi = 0; bi < job.bullets.length; bi++) children.push(mkBullet(job.bullets[bi]));
+          }
+
+        } else if (sec.type === 'education') {
+          for (var di = 0; di < sec.degrees.length; di++) {
+            var deg = sec.degrees[di];
+            var druns = [];
+            if (deg.qual)        druns.push(new TextRun({ text: deg.qual,                         bold: true, size: SZ_BODY, font: FONT, color: C_BLACK }));
+            if (deg.institution) druns.push(new TextRun({ text: '   |   ' + deg.institution,               size: SZ_BODY, font: FONT, color: C_DARK }));
+            if (deg.year)        druns.push(new TextRun({ text: '   |   ' + deg.year,    italics: true,     size: SZ_BODY, font: FONT, color: C_MUTED }));
+            children.push(new Paragraph({ spacing: { before: 120, after: 60 }, children: druns }));
+          }
+
+        } else if (sec.type === 'certifications') {
+          for (var ci = 0; ci < sec.certs.length; ci++) children.push(mkBullet(sec.certs[ci]));
+
+        } else {
+          for (var li = 0; li < sec.lines.length; li++) {
+            var line = sec.lines[li];
+            var isBul = /^[-\u2022]/.test(line);
+            var txt = line.replace(/^[-\u2022]\s*/, '').trim();
+            if (!txt) continue;
+            if (isBul) {
+              children.push(mkBullet(txt));
+            } else {
+              children.push(new Paragraph({
+                spacing: { before: 40, after: 40 },
+                children: [new TextRun({ text: txt, size: SZ_BODY, font: FONT, color: C_DARK })]
+              }));
+            }
+          }
+        }
+      }
+
+      // Build document
+      var doc = new Document({
+        creator: 'Resume.AI',
+        title: 'Tailored Resume - ' + parsed.name,
+        description: 'ATS-optimised resume generated by Resume.AI powered by Claude',
+        styles: {
+          default: { document: { run: { font: FONT, size: SZ_BODY, color: C_DARK } } }
+        },
+        numbering: {
+          config: [{
+            reference: 'rb',
+            levels: [{
+              level: 0,
+              format: LevelFormat.BULLET,
+              text: '\u2022',
+              alignment: AlignmentType.LEFT,
+              style: { paragraph: { indent: { left: 460, hanging: 260 } } }
+            }]
+          }]
+        },
+        sections: [{
+          properties: {
+            page: {
+              size: { width: PAGE_W, height: 16838 },
+              margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN }
+            }
+          },
+          children: children
+        }]
+      });
+
+      var blob = await Packer.toBlob(doc);
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href   = url;
+      var co   = companyEl.value.trim() || 'output';
+      a.download = 'Tailored_Resume_' + co.replace(/[^a-z0-9]/gi, '_').substring(0, 30) + '.docx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
+      setStatus('Download complete.', false, false);
+
+    } catch (err) {
+      setStatus('Download failed: ' + err.message, true, false);
+      console.error('docx error:', err);
+    } finally {
+      downloadBtnEl.disabled = false;
+      downloadBtnEl.innerHTML = '&#8595; Download Tailored Resume (.docx)';
+    }
+  }
+
+
+  // ─── COVER LETTER PROMPT ───────────────────────────────────────────────────
+  var CL_PROMPT = 'You are an expert career coach and professional cover letter writer. Write a tailored, compelling cover letter based on the candidate\'s resume and job description.\n\n'
+    + 'REQUIREMENTS:\n'
+    + '1. Strong opening showing genuine interest in the role and company\n'
+    + '2. Clear motivation for applying\n'
+    + '3. Direct alignment of key skills and experience with the job requirements\n'
+    + '4. Use of transferable skills to address any experience gaps\n'
+    + '5. Demonstration of curiosity, willingness to learn, and continuous development\n'
+    + '6. A confident closing with a clear call to action\n\n'
+    + 'TONE: Professional but natural — direct, warm, and impactful. Not robotic.\n\n'
+    + 'LENGTH: 300-400 words in the body paragraphs only (not counting the header or sign-off).\n\n'
+    + 'OUTPUT FORMAT: Output ONLY the cover letter inside the tags below. No explanations.\n\n'
+    + '[CL_START]\n'
+    + 'FULL NAME\n'
+    + 'Location  |  Email  |  Phone  |  LinkedIn\n'
+    + '\n'
+    + 'DD Month YYYY\n'
+    + '\n'
+    + 'Hiring Manager\n'
+    + 'Company Name\n'
+    + '\n'
+    + 'Dear Hiring Manager,\n'
+    + '\n'
+    + 'Opening paragraph: Express genuine interest in the role and company. State clear motivation.\n'
+    + '\n'
+    + 'Second paragraph: Align your strongest skills and most relevant experience to the key role requirements. Be specific and concrete.\n'
+    + '\n'
+    + 'Third paragraph: Address any gaps using transferable skills. Show analytical thinking, problem-solving, and a track record of picking up new skills.\n'
+    + '\n'
+    + 'Closing paragraph: Express enthusiasm, interest in contributing and growing, and a confident call to action inviting further discussion.\n'
+    + '\n'
+    + 'Yours sincerely,\n'
+    + '\n'
+    + '\n'
+    + 'FULL NAME\n'
+    + '[CL_END]\n\n'
+    + 'STRICT RULES:\n'
+    + '1. Only use information from the resume — never invent roles, companies, dates, or qualifications\n'
+    + '2. For missing contact details use clear placeholders: [your@email.com], [Your Phone], [linkedin.com/in/handle]\n'
+    + '3. Replace FULL NAME with the actual candidate name from the resume\n'
+    + '4. Replace Company Name with the actual company if provided, otherwise write the Company\n'
+    + '5. Use today\'s actual date in DD Month YYYY format\n'
+    + '6. No bullet points, no tables, no bold markers, no markdown formatting inside the letter\n'
+    + '7. No special characters or symbols\n'
+    + '8. Blank line between every paragraph\n'
+    + '9. The two blank lines between Yours sincerely and the name are for the handwritten signature';
+
+  // ─── GENERATE COVER LETTER ─────────────────────────────────────────────────
+  async function generateCoverLetter() {
+    var apiKey  = apiKeyEl.value.trim();
+    var company = companyEl.value.trim();
+    var jd      = jdEl.value.trim();
+    var resume  = cvEl.value.trim();
+
+    if (!apiKey)  { setClStatus('Please enter your Anthropic API key.', true, false); return; }
+    if (!jd)      { setClStatus('Please paste the job description first.', true, false); return; }
+    if (!resume)  { setClStatus('Please paste your resume first.', true, false); return; }
+
+    coverBtnEl.disabled = true;
+    coverBtnEl.innerHTML = '<span class="spin" style="display:inline-block"></span> Writing\u2026';
+    dlCoverBtnEl.classList.remove('show');
+    rawCoverLetter = '';
+
+    setClStatus('Generating cover letter\u2026', false, true);
+    clProgWrapEl.classList.add('show');
+    setClProgress(5);
+
+    var clStart = Date.now();
+    var userMsg = '';
+    if (company) userMsg += 'Company: ' + company + '\n\n';
+    userMsg += 'Job Description:\n' + jd + '\n\nResume:\n' + resume;
+    var addl = additionalEl.value.trim();
+    if (addl) userMsg += '\n\nAdditional Information: ' + addl + '\n(Use only where relevant and where it genuinely strengthens the cover letter. Prioritise job description alignment. Do not force irrelevant content.)';
+
+    try {
+      var response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: 2000,
+          system: CL_PROMPT,
+          messages: [{ role: 'user', content: userMsg }],
+          stream: true
+        })
+      });
+
+      if (!response.ok) {
+        var ed = await response.json().catch(function(){ return {}; });
+        throw new Error((ed.error && ed.error.message) || ('API error ' + response.status));
+      }
+
+      setClStatus('Writing cover letter\u2026', false, true);
+      setClProgress(15);
+      coverWrapEl.classList.add('show');
+      coverOutputEl.textContent = '';
+      coverMetaEl.textContent = '';
+
+      var reader = response.body.getReader();
+      var decoder = new TextDecoder();
+      var buf2 = '', chars2 = 0;
+
+      while (true) {
+        var rr = await reader.read();
+        if (rr.done) break;
+        buf2 += decoder.decode(rr.value, { stream: true });
+        var lines2 = buf2.split('\n');
+        buf2 = lines2.pop() || '';
+        for (var ci = 0; ci < lines2.length; ci++) {
+          var ln = lines2[ci];
+          if (ln.indexOf('data: ') !== 0) continue;
+          var dd = ln.slice(6).trim();
+          if (dd === '[DONE]') continue;
+          try {
+            var pp = JSON.parse(dd);
+            if (pp.type === 'content_block_delta' && pp.delta && pp.delta.text) {
+              rawCoverLetter += pp.delta.text;
+              chars2 += pp.delta.text.length;
+              var disp = rawCoverLetter.replace(/\[CL_START\]/g,'').replace(/\[CL_END\][\s\S]*/,'').trimStart();
+              coverOutputEl.textContent = disp + '\u258f';
+              setClProgress(Math.min(90, 15 + chars2 / 20));
+            }
+          } catch(e) {}
+        }
+      }
+
+      coverOutputEl.textContent = extractCoverText(rawCoverLetter);
+      setClProgress(100);
+      var clElapsed = ((Date.now() - clStart) / 1000).toFixed(1);
+      setClStatus('Cover letter ready.', false, false);
+      coverMetaEl.textContent = clElapsed + 's';
+      dlCoverBtnEl.classList.add('show');
+      setTimeout(function(){ clProgWrapEl.classList.remove('show'); setClProgress(0); }, 900);
+
+    } catch(err) {
+      setClStatus('Error: ' + err.message, true, false);
+      clProgWrapEl.classList.remove('show'); setClProgress(0);
+    } finally {
+      coverBtnEl.disabled = false;
+      coverBtnEl.innerHTML = '&#9998; Generate Cover Letter';
+    }
+  }
+
+  function extractCoverText(raw) {
+    var m = raw.match(/\[CL_START\]([\s\S]*?)(\[CL_END\]|$)/i);
+    if (m) return m[1].replace(/\[CL_END\][\s\S]*/,'').trimStart().trimEnd();
+    return raw.replace(/\[CL_START\]/gi,'').replace(/\[CL_END\]/gi,'').trim();
+  }
+
+  // ─── DOWNLOAD COVER LETTER ─────────────────────────────────────────────────
+  async function downloadCoverDoc() {
+    if (!rawCoverLetter) { setClStatus('No cover letter to download yet.', true, false); return; }
+    if (!window.docx)    { setClStatus('Document library not loaded. Please refresh.', true, false); return; }
+
+    dlCoverBtnEl.disabled = true;
+    dlCoverBtnEl.textContent = 'Building document\u2026';
+
+    try {
+      var coverText = extractCoverText(rawCoverLetter);
+      if (!coverText.trim()) throw new Error('Cover letter content appears to be empty.');
+
+      var docx2       = window.docx;
+      var Document2   = docx2.Document;
+      var Packer2     = docx2.Packer;
+      var Paragraph2  = docx2.Paragraph;
+      var TextRun2    = docx2.TextRun;
+
+      var FONT2   = 'Calibri';
+      var MARGIN2 = 1440;   // 1 inch in DXA
+      var PAGE_W2 = 11906;  // A4 width
+      var SZ_NAME2 = 28;    // 14pt
+      var SZ_CON2  = 18;    // 9pt
+      var SZ_BODY2 = 22;    // 11pt
+      var C_BLK2   = '111111';
+      var C_DRK2   = '1A1A1A';
+      var C_MUT2   = '555555';
+
+      var rawLines2 = coverText.split('\n');
+      var ch2 = [];
+      var li2 = 0;
+
+      // Name line (first non-empty)
+      while (li2 < rawLines2.length && rawLines2[li2].trim() === '') li2++;
+      var nameTxt = li2 < rawLines2.length ? rawLines2[li2].trim() : 'Your Name'; li2++;
+
+      // Contact line (next line with |, or skip)
+      while (li2 < rawLines2.length && rawLines2[li2].trim() === '') li2++;
+      var conTxt = '';
+      if (li2 < rawLines2.length && rawLines2[li2].indexOf('|') !== -1) {
+        conTxt = rawLines2[li2].trim(); li2++;
+      }
+
+      ch2.push(new Paragraph2({ spacing: { before: 0, after: 60 },
+        children: [new TextRun2({ text: nameTxt, bold: true, size: SZ_NAME2, font: FONT2, color: C_BLK2 })] }));
+      if (conTxt) {
+        ch2.push(new Paragraph2({ spacing: { before: 0, after: 360 },
+          children: [new TextRun2({ text: conTxt, size: SZ_CON2, font: FONT2, color: C_MUT2 })] }));
+      }
+
+      // Group remaining into paragraphs
+      var paras2 = [], cur2 = [];
+      while (li2 < rawLines2.length) {
+        var rawL = rawLines2[li2]; li2++;
+        if (rawL.trim() === '') {
+          if (cur2.length) { paras2.push(cur2.join(' ').trim()); cur2 = []; }
+        } else { cur2.push(rawL.trim()); }
+      }
+      if (cur2.length) paras2.push(cur2.join(' ').trim());
+
+      var signOffDone = false;
+      for (var pii = 0; pii < paras2.length; pii++) {
+        var pt = paras2[pii]; if (!pt) continue;
+        var isDateLine  = /^\d{1,2}\s+\w+\s+\d{4}$/.test(pt);
+        var isSalute2   = /^dear\s/i.test(pt);
+        var isSignOff2  = /^yours\s+(sincerely|faithfully)/i.test(pt);
+        var isSignName  = !signOffDone && pii === paras2.length - 1 && pt.split(' ').length <= 6 && pii > 0 && !isSalute2;
+
+        if (isDateLine) {
+          ch2.push(new Paragraph2({ spacing: { before: 0, after: 260 },
+            children: [new TextRun2({ text: pt, size: SZ_BODY2, font: FONT2, color: C_DRK2 })] }));
+        } else if (isSignOff2) {
+          ch2.push(new Paragraph2({ spacing: { before: 340, after: 0 },
+            children: [new TextRun2({ text: pt, size: SZ_BODY2, font: FONT2, color: C_DRK2 })] }));
+          // Three blank lines for handwritten signature
+          ch2.push(new Paragraph2({ spacing: { before: 0, after: 0 }, children: [new TextRun2({ text: '', size: SZ_BODY2, font: FONT2 })] }));
+          ch2.push(new Paragraph2({ spacing: { before: 0, after: 0 }, children: [new TextRun2({ text: '', size: SZ_BODY2, font: FONT2 })] }));
+          ch2.push(new Paragraph2({ spacing: { before: 0, after: 0 }, children: [new TextRun2({ text: '', size: SZ_BODY2, font: FONT2 })] }));
+          signOffDone = true;
+        } else if (isSignName) {
+          ch2.push(new Paragraph2({ spacing: { before: 0, after: 0 },
+            children: [new TextRun2({ text: pt, bold: true, size: SZ_BODY2, font: FONT2, color: C_BLK2 })] }));
+        } else if (isSalute2) {
+          ch2.push(new Paragraph2({ spacing: { before: 0, after: 240 },
+            children: [new TextRun2({ text: pt, size: SZ_BODY2, font: FONT2, color: C_DRK2 })] }));
+        } else {
+          var isBodyPara = pt.length > 60;
+          ch2.push(new Paragraph2({ spacing: { before: 0, after: isBodyPara ? 200 : 140 },
+            children: [new TextRun2({ text: pt, size: SZ_BODY2, font: FONT2, color: C_DRK2 })] }));
+        }
+      }
+
+      var doc2 = new Document2({
+        creator: 'Resume.AI',
+        title: 'Cover Letter',
+        styles: { default: { document: { run: { font: FONT2, size: SZ_BODY2, color: C_DRK2 } } } },
+        sections: [{ properties: { page: {
+          size: { width: PAGE_W2, height: 16838 },
+          margin: { top: MARGIN2, right: MARGIN2, bottom: MARGIN2, left: MARGIN2 }
+        }}, children: ch2 }]
+      });
+
+      var blob2 = await Packer2.toBlob(doc2);
+      var url2  = URL.createObjectURL(blob2);
+      var a2    = document.createElement('a');
+      a2.href   = url2;
+      var co2   = companyEl.value.trim() || 'output';
+      a2.download = 'Cover_Letter_' + co2.replace(/[^a-z0-9]/gi,'_').substring(0,30) + '.docx';
+      document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+      setTimeout(function(){ URL.revokeObjectURL(url2); }, 2000);
+      setClStatus('Cover letter downloaded.', false, false);
+
+    } catch(err) {
+      setClStatus('Download failed: ' + err.message, true, false);
+      console.error('cover docx error:', err);
+    } finally {
+      dlCoverBtnEl.disabled = false;
+      dlCoverBtnEl.innerHTML = '&#8595; Download Cover Letter (.docx)';
+    }
+  }
+
+} // end initApp
+</script>
+</body>
+</html>
