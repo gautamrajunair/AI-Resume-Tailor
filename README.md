@@ -16,7 +16,7 @@ The tool is designed to simplify and improve the job application process by alig
 
 ## Live Demo
 
-https://gautamrajunair.github.io/Ai-Resume-Tailor/
+(https://gautamrajunair.github.io/AI-Resume-Tailor/)
 
 ## Repository
 
